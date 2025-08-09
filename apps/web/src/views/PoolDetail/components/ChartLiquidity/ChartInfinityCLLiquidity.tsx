@@ -24,8 +24,11 @@ const formatDataFn = async ({
       poolTickData.ticksProcessed.map(async (t: TickProcessed, i) => {
         const active = t.tickIdx === poolTickData.activeTickIdx
         const sqrtPriceX96 = TickMath.getSqrtRatioAtTick(t.tickIdx)
-        const token0 = poolInfo.token0?.wrapped
-        const token1 = poolInfo.token1?.wrapped
+
+        // Native tokens allowed, but typecast to Token
+        const token0 = poolInfo.token0 as Token
+        const token1 = poolInfo.token1 as Token
+
         const mockTicks = [
           {
             index: t.tickIdx - tickSpacing,

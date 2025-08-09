@@ -1,13 +1,22 @@
+import { Protocol } from '@pancakeswap/farms'
 import { Currency, isCurrencySorted } from '@pancakeswap/swap-sdk-core'
 import { BinTickProcessed, useBinPoolActiveLiquidity, usePoolActiveLiquidity } from 'hooks/infinity/usePoolTickData'
 import { tryParsePrice } from 'hooks/v3/utils'
 import { useMemo } from 'react'
 import { Address } from 'viem/accounts'
 
-function parsePrice(baseCurrency?: Currency, quoteCurrency?: Currency, priceValue?: string) {
+function parsePrice(baseCurrency?: Currency, quoteCurrency?: Currency, priceValue?: string, protocol?: Protocol) {
   const isSorted = baseCurrency && quoteCurrency && isCurrencySorted(baseCurrency, quoteCurrency)
   const basePrice = tryParsePrice(baseCurrency, quoteCurrency, priceValue)
-  const price = isSorted ? basePrice : basePrice?.invert()
+
+  let price = isSorted ? basePrice : basePrice?.invert()
+
+  // Patch fix for native pairs' niche issue with token ordering
+  // https://linear.app/pancakeswap/issue/PAN-7555/cannot-see-liquidity-depth-chart
+  if (protocol === Protocol.InfinityCLAMM && (baseCurrency?.isNative || quoteCurrency?.isNative)) {
+    price = isSorted ? basePrice?.invert() : basePrice
+  }
+
   return price && price?.denominator !== 0n ? parseFloat(price.toFixed(18)) : 0
 }
 
@@ -29,7 +38,7 @@ export function useCLDensityChartData({ poolId, chainId, baseCurrency, quoteCurr
     return data
       .map(({ liquidityActive, price0 }) => ({
         activeLiquidity: parseFloat(liquidityActive.toString()),
-        price0: parsePrice(baseCurrency, quoteCurrency, price0),
+        price0: parsePrice(baseCurrency, quoteCurrency, price0, Protocol.InfinityCLAMM),
       }))
       .filter(({ activeLiquidity }) => activeLiquidity > 0)
   }, [data, baseCurrency, quoteCurrency])
