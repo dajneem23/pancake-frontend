@@ -44,9 +44,10 @@ const fetchRiskApi = async (address: string, chainId: number) => {
 }
 
 export const fetchRiskToken = async (address: string, chainId: number): Promise<RiskTokenInfo> => {
-  const riskApi = await fetchRiskApi(address, chainId)
-  if (riskApi?.data && !riskApi?.data?.isError) {
-    return riskApi.data
+  const riskApi: RiskTokenInfo | undefined = await fetchRiskApi(address, chainId)
+
+  if (riskApi && !riskApi?.isError) {
+    return riskApi
   }
 
   return {
