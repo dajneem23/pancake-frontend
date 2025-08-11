@@ -1,0 +1,22 @@
+# docker-compose.yml for apps/blog
+version: '3.8'
+services:
+  blog:
+    build:
+      context: ./
+      dockerfile: ./apps/blog/Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+  web:
+    build:
+      context: ./
+      dockerfile: ./apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./apps/web:/app
+      - .:/app/packages
